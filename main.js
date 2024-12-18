@@ -155,5 +155,6 @@ const main = async () => {
     }
     log.warn(`This script will run every 24 hours so don't close it.\n`);
 };
+
 setInterval(main, 24 * 60 * 60 * 1000); // Run every 24 hours
 main();
