@@ -58,7 +58,7 @@ export async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
         };
 
         const txResponse = await wallet.sendTransaction(tx);
-        log.info(`Transaction sent to ${addressRecipient}! Hash: ${txResponse.hash}`);
+        log.info(`Transaction sent to ${addressRecipient}: https://basescan.org/tx/${txResponse.hash}`);
 
         await txResponse.wait();
     } catch (error) {

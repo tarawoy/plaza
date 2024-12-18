@@ -16,7 +16,7 @@ Plaza is a platform for programmable derivatives built as a set of Solidity smar
 - **Auto Get Faucets**
 - **Auto Generate New Wallets**
 - **Send Fund To Existing Address**
-- **All Wallets information Saved In wallet.json** 
+- **All Wallets information Saved In wallets.json** 
 
 
 ## Requirements
