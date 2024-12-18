@@ -27,12 +27,15 @@ const getFaucet = async (address, proxyUrl) => {
         if (!response.ok) {
             const data = await response.json();
             log.info(`Faucet Response: ${data.message}`);
+            return null;
         } else {
             log.info(`Faucet Response: Success`);
+            return 'success'
         }
 
     } catch (error) {
         console.error('Error in Faucet request:', error);
+        return null;
     }
 };
 
@@ -139,14 +142,16 @@ const main = async () => {
                 await new Promise(resolve => setTimeout(resolve, 10000));
             } else {
                 log.info(`=== Not Enough wstETH, Trying to Claim Faucet ===`);
-                await getFaucet(wallet.address, proxy);
+                const faucet = await getFaucet(wallet.address, proxy);
                 await new Promise(resolve => setTimeout(resolve, 15000));
 
-                log.info(`Starting Perform Transactions for address: ${wallet.address}`);
-                await performTransactions(wallet.privateKey, 0);
-                await performTransactions(wallet.privateKey, 1);
-                log.info('Cooldowns 10 seconds before continue...\n')
-                await new Promise(resolve => setTimeout(resolve, 10000));
+                if (faucet === 'success') {
+                    log.info(`Starting Perform Transactions for address: ${wallet.address}`);
+                    await performTransactions(wallet.privateKey, 0);
+                    await performTransactions(wallet.privateKey, 1);
+                    log.info('Cooldowns 10 seconds before continue...\n')
+                    await new Promise(resolve => setTimeout(resolve, 10000));
+                }
             }
             index++;
         } catch (err) {
