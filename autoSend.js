@@ -6,7 +6,7 @@ async function faucet() {
     log.warn(banner)
     const wallets = readWallets();
     log.info(`Found ${wallets.length} existing wallets...`);
-    const faucetAmount = await askQuestion('How Many ETH You Want To Send to each address, example 0.01 : ')
+    const faucetAmount = await askQuestion('How Many ETH You Want To Send to each address, example 0.0003 : ')
     const pvKey = await askQuestion('Please enter your private key that has ETH on Base Mainnet\nThis wallet will be used to send a fund to each address : ');
 
     for (let i = 0; i < wallets.length; i++) {
