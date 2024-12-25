@@ -61,7 +61,9 @@ export async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
         log.info(`Transaction sent to ${addressRecipient}: https://basescan.org/tx/${txResponse.hash}`);
 
         await txResponse.wait();
+        return txResponse.hash;
     } catch (error) {
         log.error("Error sending faucet:", error);
+        return null;
     }
 }

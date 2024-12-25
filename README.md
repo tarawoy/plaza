@@ -9,6 +9,10 @@ Plaza is a platform for programmable derivatives built as a set of Solidity smar
 - Website [https://testnet.plaza.finance/](https://testnet.plaza.finance/rewards/JL4590xVLSix)
 - Twitter [@plaza_finance](https://x.com/plaza_finance)
 
+## Update 
+
+- must reinstall dependencies after `git pull` : `npm install` 
+- auto send now being sent from wallet to wallet, not from main wallet to all wallets.
 
 ## Features
 
