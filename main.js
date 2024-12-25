@@ -20,17 +20,34 @@ const headers = {
 };
 
 const createAxiosInstance = (proxyUrl) => {
-    return axios.create({
-        baseURL: 'https://api.plaza.finance/',
-        headers,
-        proxy: proxyUrl
-            ? {
-                protocol: 'http',
-                host: proxyUrl.split(':')[0],
-                port: parseInt(proxyUrl.split(':')[1], 10),
-            }
-            : false,
-    });
+    if (proxyUrl) {
+        const proxyParts = proxyUrl.match(/^http:\/\/([^:]+):([^@]+)@([^:]+):(\d+)$/);
+
+        if (proxyParts) {
+            const [, user, password, host, port] = proxyParts;
+
+            return axios.create({
+                baseURL: 'https://api.plaza.finance/',
+                headers,
+                proxy: {
+                    protocol: 'http',
+                    host: host,
+                    port: parseInt(port, 10),
+                    auth: {
+                        username: user,
+                        password: password,
+                    },
+                },
+            });
+        } else {
+            throw new Error('Invalid proxy URL format');
+        }
+    } else {
+        return axios.create({
+            baseURL: 'https://api.plaza.finance/',
+            headers,
+        });
+    }
 };
 
 const getFaucet = async (address, proxyUrl) => {
