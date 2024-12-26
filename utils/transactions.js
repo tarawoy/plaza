@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import log from "./logger.js";
 
-// Configuration
+// 配置
 const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
 const contractAddress = '0x47129e886b44B5b8815e6471FCD7b31515d83242';
 const explorer = 'https://sepolia.basescan.org/tx/'
@@ -36,7 +36,7 @@ const erc20ABI = [
         "stateMutability": "view"
     }
 ];
-// Redeem and Deposit ABI
+// 赎回和存款 ABI
 const redeemABI = [
     {
         inputs: [
@@ -65,7 +65,7 @@ const createABI = [
     },
 ];
 
-// Function to check and approve a token
+// 函数检查并批准代币
 const approveTokenIfNeeded = async (wallet, tokenAddress, tokenName) => {
     try {
         const tokenContract = new ethers.Contract(tokenAddress, erc20ABI, wallet);
@@ -77,28 +77,28 @@ const approveTokenIfNeeded = async (wallet, tokenAddress, tokenName) => {
 
         const tx = await tokenContract.approve(contractAddress, ApproveAmount);
         await tx.wait();
-        log.info(`Approval transaction for ${tokenName} confirmed ${explorer}${tx.hash}`);
+        log.info(`${tokenName} 的批准交易已确认 ${explorer}${tx.hash}`);
     } catch (error) {
-        log.error(`Error approving ${tokenName}:`, error);
+        log.error(`批准 ${tokenName} 时出错:`, error);
     }
 };
 
-// Updated approveAllTokens function
+// 更新的 approveAllTokens 函数
 const approveAllTokens = async (wallet) => {
     for (const token of tokens) {
         await approveTokenIfNeeded(wallet, token.address, token.name);
     }
 };
 
-// Deposit and Redeem Functions
+// 存款和赎回函数
 const deposit = async (contract, tokenType) => {
     try {
         const tx = await contract.create(tokenType, depositAmount, minAmount);
 
         await tx.wait();
-        log.info(`Deposit transaction confirmed ${explorer}${tx.hash}`);
+        log.info(`存款交易已确认 ${explorer}${tx.hash}`);
     } catch (error) {
-        log.error('Error in Deposit:', error);
+        log.error('存款过程中出错:', error);
     }
 };
 
@@ -108,23 +108,23 @@ const redeem = async (contract, tokenType) => {
             gasLimit: '0x493e0',
         });
         await tx.wait();
-        log.info(`Redeem transaction confirmed. ${explorer}${tx.hash}`);
+        log.info(`赎回交易已确认. ${explorer}${tx.hash}`);
     } catch (error) {
-        log.error('Error in redeem:', error);
+        log.error('赎回过程中出错:', error);
     }
 };
 
-// Run Transactions
+// 运行交易
 const runTransactions = async (privateKey, tokenType) => {
     const wallet = new ethers.Wallet(privateKey, provider);
     const contract = new ethers.Contract(contractAddress, [...redeemABI, ...createABI], wallet);
 
     await approveAllTokens(wallet);
 
-    log.info(`Address ${wallet.address} Executing deposit...`);
+    log.info(`地址 ${wallet.address} 正在执行存款...`);
     await deposit(contract, tokenType);
 
-    log.info(`Address ${wallet.address} Executing redeem...`);
+    log.info(`地址 ${wallet.address} 正在执行赎回...`);
     await redeem(contract, tokenType);
 };
 
