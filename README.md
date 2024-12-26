@@ -1,69 +1,69 @@
-# PLAZA FINANCE BOT
-![BANNER PLAZA FINANCE](image/image-1.png)
-Plaza is a platform for on-chain bonds and leverage on Base.
+以下是汉化后的说明文档：
 
-Plaza is a platform for programmable derivatives built as a set of Solidity smart contracts on Base. It offers two core products: bondETH and levETH, which are programmable derivatives of a pool of ETH liquid staking derivatives (LSTs) and liquid restaking derivatives (LRTs) such as wstETH. Users can deposit an underlying pool asset like wstETH and receive levETH or bondETH in return, which are represented as ERC20 tokens. These tokens are composable with protocols such as DEXes, lending markets, restaking platforms, etc.
+# PLAZA FINANCE BOT
+Plaza是一个在Base上提供链上债券和杠杆的平台。
+
+Plaza是一个在Base上构建的Solidity智能合约集，用于创建可编程衍生品。它提供两种核心产品：bondETH和levETH，这些是基于ETH流动性质押衍生品（LSTs）和流动性再质押衍生品（LRTs）如wstETH的可编程衍生品。用户可以存入基础池资产如wstETH，并接收levETH或bondETH，这些以ERC20代币形式体现。这些代币可以与DEX、借贷市场、再质押平台等协议进行组合。
 
 ![banner](image/image.png)
 
-- Website [https://testnet.plaza.finance/](https://testnet.plaza.finance/rewards/JL4590xVLSix)
-- Twitter [@plaza_finance](https://x.com/plaza_finance)
+- 网站 [https://testnet.plaza.finance/](https://testnet.plaza.finance/rewards/0WkJP1uDWPis)
+- 推特 [@plaza_finance](https://x.com/plaza_finance)
 
-## Update 
+## 更新 
 
-- must reinstall dependencies after `git pull` : `npm install` 
-- auto send now being sent from wallet to wallet, not from main wallet to all wallets.
+- `git pull` 后必须重新安装依赖：`npm install`
+- 现在自动发送从钱包到钱包，而不是从主钱包到所有钱包。
 
-## Features
+## 特性
 
-- **Auto Daily Transaction**
-- **Auto Get Faucets**
-- **Auto Generate New Wallets**
-- **Send Fund To Existing Address**
-- **All Wallets information Saved In wallets.json** 
+- **每日自动交易**
+- **自动获取水龙头**
+- **自动生成新钱包**
+- **发送资金到现有地址**
+- **所有钱包信息保存在 wallets.json 中**
 
+## 要求
 
-## Requirements
+- **Node.js**: 请确保已安装 Node.js。
+- **npm**: 请确保已安装 npm。
+- **钱包必须在eth/base/arb主网上有$1以获取水龙头**
+- **使用自动发送功能向现有钱包发送资金**：每个地址发送 `0.0003` eth
 
-- **Node.js**: Ensure you have Node.js installed.
-- **npm**: Ensure you have npm installed.
-- **Wallets must have $1 in eth/base/arb mainnet to get faucet**
-- **Use feature auto send to send fund to existing wallet:** send `0.0003` eth for each addr
+## 设置
 
-## Setup
-
-1. Clone this repository:
+1. 克隆此仓库：
    ```bash
    git clone https://github.com/Zlkcyber/plazafintot.git
    cd plazafintot
    ```
-2. Install dependencies:
+2. 安装依赖：
    ```bash
    npm install
    ```
-3. Setup: to create new wallets
+3. 设置：创建新钱包
    ```bash
    npm run create
    ```
 
-4. Additional Feature: 
+4. 额外功能：
 
-- send fund to existing address
+- 发送资金到现有地址
 
     ```bash
     npm run autosend
     ```
-- use proxy: its optional, paste proxy in the proxy.txt file. 1 proxy per line.
+- 使用代理：可选，将代理粘贴到 proxy.txt 文件中。每行一个代理。
     ```bash
     nano proxy.txt
     ```
-    format : `http://user:password@ip:port`
+    格式：`http://user:password@ip:port`
 
-5. Run The Script:
+5. 运行脚本：
    ```bash
    npm run start
    ```
 
 ## ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-This project is licensed under the [MIT License](LICENSE).
+此项目采用 [MIT License](LICENSE) 许可。
