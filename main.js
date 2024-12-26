@@ -3,6 +3,7 @@ import { readWallets, readProxyFile } from "./utils/script.js";
 import banner from "./utils/banner.js";
 import log from "./utils/logger.js";
 import performTransactions from './utils/transactions.js';
+import { mintNft, signMessage } from './contract.js';
 
 const reffCode = `bfc7b70e-66ad-4524-9bb6-733716c4da94`;
 const proxyPath = 'proxy.txt';
@@ -95,55 +96,132 @@ const fetchUserBalance = async (address, proxyUrl) => {
         return null;
     }
 };
+const getSign = async (level, user, signature, proxyUrl) => {
+    const axiosInstance = createAxiosInstance(proxyUrl);
+    try {
+        const response = await axiosInstance.post('/gamification/claim-level-rewards', { level, user, signature });
+        return response.data.signature;
+    } catch (error) {
+        log.error(`Error when getting signature: ${error.response?.data?.message || error.message}`);
+        if (error.response?.data?.message === 'User already claimed the reward') {
+            return 'claimed';
+        }
+        return null;
+    }
+};
+
+const claimNftReward = async ({
+    points,
+    nftType,
+    requiredPoints,
+    wallet,
+    proxy,
+    claimedState,
+}) => {
+    const walletKey = wallet.address.toLowerCase();
+    if (claimedState[walletKey][`nft${nftType}`]) {
+        return;
+    }
+
+    if (points < requiredPoints) {
+        return;
+    }
+
+    log.info(`=== Claiming NFT ${nftType} Rewards for Address: ${wallet.address} ===`);
+    const signWallet = await signMessage(wallet.privateKey);
+    const signature = await getSign(nftType, wallet.address, signWallet, proxy);
+
+    if (signature && signature !== 'claimed') {
+        const mintResult = await mintNft(wallet.privateKey, signature);
+        if (mintResult) {
+            log.info(`=== NFT ${nftType} Successfully Claimed ===`);
+            claimedState[walletKey][`nft${nftType}`] = true;
+        } else {
+            log.error(`=== Failed to Claim NFT ${nftType} ===`);
+        }
+    } else if (signature === 'claimed') {
+        claimedState[walletKey][`nft${nftType}`] = true;
+    }
+};
 
 const main = async () => {
     log.warn(banner);
     const wallets = readWallets();
     const proxyList = readProxyFile(proxyPath);
     let index = 0;
+    const claimedState = {};
 
-    for (const wallet of wallets) {
-        const proxy = proxyList.length > 0 ? proxyList[index % proxyList.length] : null;
-        log.warn(`Running Using Proxy: ${proxy || 'No Proxy'}`);
-        try {
-            await claimRequest(wallet.address, proxy);
+    while (true) {
+        for (const wallet of wallets) {
+            const walletKey = wallet.address.toLowerCase();
+            claimedState[walletKey] = claimedState[walletKey] || { nft1: false, nft2: false };
+            const proxy = proxyList.length > 0 ? proxyList[index % proxyList.length] : null;
+            log.warn(`Running Using Proxy: ${proxy || 'No Proxy'}`);
+            try {
+                await claimRequest(wallet.address, proxy);
 
-            const profile = await fetchUser(wallet.address, proxy);
-            const level = profile?.level || 0;
-            const points = profile?.points || 0;
-            log.info(`=== Address: ${wallet.address} | Level: ${level} | Points: ${points} ===`);
+                const profile = await fetchUser(wallet.address, proxy);
+                const level = profile?.level || 0;
+                const points = profile?.points || 0;
+                log.info(`=== Address: ${wallet.address} | Level: ${level} | Points: ${points} ===`);
 
-            const balances = await fetchUserBalance(wallet.address, proxy);
-            const balance = parseInt(balances[0]?.balanceRaw, 10) / decimal || 0;
-            log.info(`=== Address: ${wallet.address} | wstETH Balance : ${balance} ===\n`);
+                log.info(`=== Checking NFT Rewards ===`);
+                await claimNftReward({
+                    points,
+                    nftType: 1,
+                    requiredPoints: 50,
+                    wallet,
+                    proxy,
+                    claimedState,
+                });
 
-            if (balance > 0.02) {
-                log.info(`Starting Perform Transactions for address: ${wallet.address}`);
-                await performTransactions(wallet.privateKey, 0);
-                await performTransactions(wallet.privateKey, 1);
+                await claimNftReward({
+                    points,
+                    nftType: 2,
+                    requiredPoints: 200,
+                    wallet,
+                    proxy,
+                    claimedState,
+                });
 
-                log.info('Cooldowns 10 seconds before continuing...\n');
-                await new Promise(resolve => setTimeout(resolve, 10000));
-            } else {
-                log.info(`=== Not Enough wstETH, Trying to Claim Faucet ===`);
-                const faucet = await getFaucet(wallet.address, proxy);
-                await new Promise(resolve => setTimeout(resolve, 15000));
+                if (!claimedState[walletKey].nft1 && !claimedState[walletKey].nft2) {
+                    log.info(`=== No NFT Rewards For This Address ===`);
+                } else {
+                    log.info(`=== NFT Rewards Already Claimed For This Address ===`);
+                }
 
-                if (faucet === 'success') {
+                const balances = await fetchUserBalance(wallet.address, proxy);
+                const balance = parseInt(balances[0]?.balanceRaw, 10) / decimal || 0;
+                log.info(`=== Address: ${wallet.address} | wstETH Balance : ${balance} ===\n`);
+
+                if (balance > 0.02) {
                     log.info(`Starting Perform Transactions for address: ${wallet.address}`);
                     await performTransactions(wallet.privateKey, 0);
                     await performTransactions(wallet.privateKey, 1);
+
                     log.info('Cooldowns 10 seconds before continuing...\n');
                     await new Promise(resolve => setTimeout(resolve, 10000));
+                } else {
+                    log.info(`=== Not Enough wstETH, Trying to Claim Faucet ===`);
+                    const faucet = await getFaucet(wallet.address, proxy);
+                    await new Promise(resolve => setTimeout(resolve, 15000));
+
+                    if (faucet === 'success') {
+                        log.info(`Starting Perform Transactions for address: ${wallet.address}`);
+                        await performTransactions(wallet.privateKey, 0);
+                        await performTransactions(wallet.privateKey, 1);
+                        log.info('Cooldowns 10 seconds before continuing...\n');
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+                    }
                 }
+                index++;
+            } catch (err) {
+                console.error(err);
             }
-            index++;
-        } catch (err) {
-            console.error(err);
         }
+        log.info('Sleeping for 24 hours...');
+        await new Promise(resolve => setTimeout(resolve, 24 * 60 * 60 * 1000));
     }
-    log.warn(`This script will run every 24 hours so don't close it.\n`);
 };
 
-setInterval(main, 24 * 60 * 60 * 1000); // Run every 24 hours
 main();
