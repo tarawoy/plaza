@@ -34,8 +34,8 @@ Plaza是一个在Base上构建的Solidity智能合约集，用于创建可编程
 
 1. 克隆此仓库：
    ```bash
-   git clone https://github.com/Zlkcyber/plazafintot.git
-   cd plazafintot
+   git clone https://github.com/Gzgod/plaza.git
+   cd plaza
    ```
 2. 安装依赖：
    ```bash
