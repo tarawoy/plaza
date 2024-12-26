@@ -5,7 +5,7 @@ import log from "./utils/logger.js"
 import iniBapakBudi from "./utils/banner.js"
 
 
-// Function to create a new wallet
+// 函数用于创建新钱包
 function createNewWallet() {
     const wallet = ethers.Wallet.createRandom();
 
@@ -15,16 +15,16 @@ function createNewWallet() {
         mnemonic: wallet.mnemonic.phrase
     };
 
-    // Log the wallet details
-    log.info("New Ethereum Wallet created:");
-    log.info(`Address: ${walletDetails.address}`);
-    log.info(`Private Key: ${walletDetails.privateKey}`);
-    log.info(`Mnemonic: ${walletDetails.mnemonic}`);
+    // 日志记录钱包详情
+    log.info("创建了新的以太坊钱包:");
+    log.info(`地址: ${walletDetails.address}`);
+    log.info(`私钥: ${walletDetails.privateKey}`);
+    log.info(`助记词: ${walletDetails.mnemonic}`);
 
     return walletDetails;
 }
 
-// Function to save the wallet
+// 函数用于保存钱包到文件
 function saveWalletToFile(walletDetails) {
     let wallets = [];
     if (fs.existsSync("wallets.json")) {
@@ -36,27 +36,27 @@ function saveWalletToFile(walletDetails) {
 
     fs.writeFileSync("wallets.json", JSON.stringify(wallets, null, 2));
 
-    log.warn("Wallet saved to wallets.json");
+    log.warn("钱包已保存到 wallets.json");
 }
 
 async function askingHowManyWallets() {
-    const answer = await askQuestion('How many wallets would you like to create? ');
+    const answer = await askQuestion('您想创建多少个钱包？ ');
     return parseInt(answer);
 }
 
-// Main function
+// 主函数
 async function main() {
     log.warn(iniBapakBudi)
     const numWallets = await askingHowManyWallets();
     for (let i = 0; i < numWallets; i++) {
-        log.info(`Creating wallet #${i + 1}...`);
+        log.info(`正在创建第${i + 1}个钱包...`);
 
         const newWallet = createNewWallet();
         saveWalletToFile(newWallet);
     }
 
-    log.info("All wallets created.");
+    log.info("所有钱包已创建。");
 }
 
-// Run
+// 运行
 main();
