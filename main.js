@@ -223,5 +223,5 @@ const main = async () => {
         await new Promise(resolve => setTimeout(resolve, 24 * 60 * 60 * 1000));
     }
 };
-// run
+// lets do it
 main();
