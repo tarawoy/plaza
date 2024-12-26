@@ -16,34 +16,35 @@ export async function askQuestion(question) {
         });
     });
 }
+
 export function readProxyFile(filePath) {
     try {
         const data = fs.readFileSync(filePath, 'utf-8');
         const proxyArray = data.split('\n').map(line => line.trim()).filter(line => line);
         if (proxyArray.length === 0) {
-            log.warn('No proxies found in the file.');
+            log.warn('文件中未找到代理。');
         }
         return proxyArray;
     } catch (error) {
-        log.error('Error reading proxy file:', error);
+        log.error('读取代理文件时出错:', error);
         return [];
     }
 }
 
-// Read wallets from wallets.json
+// 从wallets.json读取钱包
 export function readWallets() {
     if (fs.existsSync("wallets.json")) {
         const data = fs.readFileSync("wallets.json");
         return JSON.parse(data);
     } else {
-        log.info("No wallets found in wallets.json");
+        log.info("在wallets.json中未找到钱包");
         return [];
     }
 }
 
-// Function to send fund to a wallet
+// 发送资金到钱包的函数
 export async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
-    log.info(`Sending Faucet ${faucetAmount} To Address ${addressRecipient}`);
+    log.info(`发送水龙头 ${faucetAmount} 到地址 ${addressRecipient}`);
     try {
         const provider = new ethers.JsonRpcProvider('https://base.llamarpc.com');
         const wallet = new ethers.Wallet(pvkey, provider);
@@ -58,12 +59,12 @@ export async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
         };
 
         const txResponse = await wallet.sendTransaction(tx);
-        log.info(`Transaction sent to ${addressRecipient}: https://basescan.org/tx/${txResponse.hash}`);
+        log.info(`交易发送到 ${addressRecipient}: https://basescan.org/tx/${txResponse.hash}`);
 
         await txResponse.wait();
         return txResponse.hash;
     } catch (error) {
-        log.error("Error sending faucet:", error);
+        log.error("发送水龙头时出错:", error);
         return null;
     }
 }
