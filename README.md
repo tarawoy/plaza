@@ -1,6 +1,4 @@
-以下是汉化后的说明文档：
-
-# PLAZA FINANCE BOT
+# PLAZA FINANCE BOT 使用默认认为知晓女巫风险 女巫风险自负！
 Plaza是一个在Base上提供链上债券和杠杆的平台。
 
 Plaza是一个在Base上构建的Solidity智能合约集，用于创建可编程衍生品。它提供两种核心产品：bondETH和levETH，这些是基于ETH流动性质押衍生品（LSTs）和流动性再质押衍生品（LRTs）如wstETH的可编程衍生品。用户可以存入基础池资产如wstETH，并接收levETH或bondETH，这些以ERC20代币形式体现。这些代币可以与DEX、借贷市场、再质押平台等协议进行组合。
