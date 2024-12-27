@@ -94,9 +94,13 @@ const approveAllTokens = async (wallet) => {
 const deposit = async (contract, tokenType) => {
     try {
         const tx = await contract.create(tokenType, depositAmount, minAmount);
-
         await tx.wait();
         log.info(`存款交易已确认 ${explorer}${tx.hash}`);
+        
+        // 增加随机间隔
+        const randomDelay = Math.floor(Math.random() * (200 - 15 + 1)) + 15;
+        log.info(`等待 ${randomDelay} 秒后执行赎回...`);
+        await new Promise(resolve => setTimeout(resolve, randomDelay * 1000));
     } catch (error) {
         log.error('存款过程中出错:', error);
     }
