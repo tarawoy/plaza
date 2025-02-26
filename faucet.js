@@ -4,7 +4,7 @@ import banner from "./utils/banner.js";
 import log from "./utils/logger.js";
 
 async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
-    log.info(`向地址 ${addressRecipient} 发送水龙头 ${faucetAmount}`);
+    log.info(`Sending faucet ${faucetAmount} to address ${addressRecipient}`);
     try {
         const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
         const wallet = new ethers.Wallet(pvkey, provider);
@@ -19,89 +19,89 @@ async function sendFaucet(faucetAmount, addressRecipient, pvkey) {
         };
 
         const txResponse = await wallet.sendTransaction(tx);
-        log.info(`交易已发送到 ${addressRecipient}: https://sepolia.basescan.org/tx/${txResponse.hash}`);
+        log.info(`Transaction sent to ${addressRecipient}: https://sepolia.basescan.org/tx/${txResponse.hash}`);
 
         await txResponse.wait();
         return txResponse.hash;
     } catch (error) {
-        log.error("发送水龙头时发生错误:", error);
+        log.error("Error occurred while sending faucet:", error);
         return null;
     }
 }
 
 async function faucet() {
     log.warn(banner);
-    log.warn(`=== 此脚本适用于 Base Sepolia 测试网络 ===`);
-    log.warn(`此脚本将向 wallets.json 文件中的钱包分配 (ETH) 测试网络代币。`);
+    log.warn(`=== This script is for the Base Sepolia test network ===`);
+    log.warn(`This script will distribute (ETH) test network tokens to wallets listed in the wallets.json file.`);
 
     const wallets = readWallets();
     if (wallets.length === 0) {
-        log.error(`在 wallets.json 中未找到钱包。请添加钱包以继续。`);
+        log.error(`No wallets found in wallets.json. Please add wallets to continue.`);
         return;
     }
-    log.info(`从文件中加载了 ${wallets.length} 个钱包。`);
+    log.info(`Loaded ${wallets.length} wallets from the file.`);
 
-    // 输入水龙头金额
-    const faucetAmount = await askQuestion('请输入要发送给每个钱包的 ETH 数量 (例如，0.001): ');
+    // Input faucet amount
+    const faucetAmount = await askQuestion('Please enter the amount of ETH to send to each wallet (e.g., 0.001): ');
     const amount = parseFloat(faucetAmount);
     if (isNaN(amount) || amount <= 0) {
-        log.error(`输入的金额无效。请提供一个有效的正数。`);
+        log.error(`Invalid amount entered. Please provide a valid positive number.`);
         return;
     }
-    log.info(`您选择向每个钱包发送 ${faucetAmount} ETH。`);
+    log.info(`You chose to send ${faucetAmount} ETH to each wallet.`);
 
-    // 询问发送者钱包的私钥
-    const pvKey = await askQuestion('输入在 Base Sepolia 测试网络上拥有 ETH 的钱包的私钥:\n这个钱包将用于初始转账: ');
+    // Ask for sender wallet's private key
+    const pvKey = await askQuestion('Enter the private key of the wallet holding ETH on the Base Sepolia test network:\nThis wallet will be used for the initial transaction: ');
     if (!pvKey) {
-        log.error(`未提供私钥。请提供有效的私钥以继续。`);
+        log.error(`Private key not provided. Please provide a valid private key to continue.`);
         return;
     }
-    log.info(`已提供私钥。继续设置。`);
+    log.info(`Private key provided. Proceeding with setup.`);
 
-    // 确认发送的总 ETH 数量
+    // Confirm the total ETH amount to be sent
     const totalAmount = amount * wallets.length;
-    log.warn(`您即将向 ${wallets.length} 个钱包发送总共 ${totalAmount} ETH。`);
-    const isConfirmed = await askQuestion(`您确定要执行此操作吗？ (y/n): `);
+    log.warn(`You are about to send a total of ${totalAmount} ETH to ${wallets.length} wallets.`);
+    const isConfirmed = await askQuestion(`Are you sure you want to proceed? (y/n): `);
 
     if (isConfirmed.toLowerCase() !== 'y') {
-        log.warn(`操作已被用户取消。`);
+        log.warn(`Operation canceled by user.`);
         return;
     }
 
-    // 开始发送资金
-    log.info(`=== 开始分配资金 ===`);
+    // Start sending funds
+    log.info(`=== Starting to distribute funds ===`);
     try {
-        // 使用主私钥向第一个钱包发送资金
-        log.info(`从您的主要钱包向第一个钱包 (${wallets[0].address}) 发送 ${totalAmount} ETH。`);
+        // Use the main private key to send funds to the first wallet
+        log.info(`Sending ${totalAmount} ETH from your main wallet to the first wallet (${wallets[0].address}).`);
         const sendtoWallet = await sendFaucet(totalAmount.toFixed(6).toString(), wallets[0].address, pvKey);
 
         if (!sendtoWallet) {
-            log.error(`向第一个钱包发送资金失败`);
+            log.error(`Failed to send funds to the first wallet`);
             return;
         } else {
-            log.info(`成功向 ${wallets[0].address} 发送了 ${totalAmount} ETH。`);
+            log.info(`Successfully sent ${totalAmount} ETH to ${wallets[0].address}.`);
         }
 
-        // 进行其他钱包间的转账
+        // Transfer funds to other wallets
         for (let i = 0; i < wallets.length - 1; i++) {
             const senderWallet = wallets[i];
             const receiptWallet = wallets[i + 1];
             const amountToSend = amount * (wallets.length - (i + 1));
 
-            log.info(`=== 从钱包 ${senderWallet.address} 向钱包 ${receiptWallet.address} 转账 ${amountToSend} ETH ===`);
+            log.info(`=== Sending ${amountToSend} ETH from wallet ${senderWallet.address} to wallet ${receiptWallet.address} ===`);
             const sendToWallets = await sendFaucet(amountToSend.toFixed(6).toString(), receiptWallet.address, senderWallet.privateKey);
             if (!sendToWallets) {
-                log.error(`向 ${receiptWallet.address} 发送资金失败`);
+                log.error(`Failed to send funds to ${receiptWallet.address}`);
                 return;
             } else {
-                log.info(`成功从 ${senderWallet.address} 向 ${receiptWallet.address} 转账了 ${amountToSend} ETH。`);
+                log.info(`Successfully transferred ${amountToSend} ETH from ${senderWallet.address} to ${receiptWallet.address}.`);
             }
         }
 
-        log.info(`=== 资金分配完成 ===`);
-        log.info(`所有钱包已成功充值！`);
+        log.info(`=== Fund distribution completed ===`);
+        log.info(`All wallets have been successfully funded!`);
     } catch (error) {
-        log.error(`操作过程中发生错误: ${error.message}`);
+        log.error(`Error occurred during operation: ${error.message}`);
     }
 }
 
