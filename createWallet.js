@@ -1,11 +1,10 @@
 import { ethers } from 'ethers';
 import fs from 'fs';
 import { askQuestion } from "./utils/script.js";
-import log from "./utils/logger.js"
-import iniBapakBudi from "./utils/banner.js"
+import log from "./utils/logger.js";
+import banner from "./utils/banner.js";
 
-
-// 函数用于创建新钱包
+// Function to create a new wallet
 function createNewWallet() {
     const wallet = ethers.Wallet.createRandom();
 
@@ -15,16 +14,16 @@ function createNewWallet() {
         mnemonic: wallet.mnemonic.phrase
     };
 
-    // 日志记录钱包详情
-    log.info("创建了新的以太坊钱包:");
-    log.info(`地址: ${walletDetails.address}`);
-    log.info(`私钥: ${walletDetails.privateKey}`);
-    log.info(`助记词: ${walletDetails.mnemonic}`);
+    // Log wallet details
+    log.info("Created a new Ethereum wallet:");
+    log.info(`Address: ${walletDetails.address}`);
+    log.info(`Private Key: ${walletDetails.privateKey}`);
+    log.info(`Mnemonic: ${walletDetails.mnemonic}`);
 
     return walletDetails;
 }
 
-// 函数用于保存钱包到文件
+// Function to save wallet to a file
 function saveWalletToFile(walletDetails) {
     let wallets = [];
     if (fs.existsSync("wallets.json")) {
@@ -36,27 +35,27 @@ function saveWalletToFile(walletDetails) {
 
     fs.writeFileSync("wallets.json", JSON.stringify(wallets, null, 2));
 
-    log.warn("钱包已保存到 wallets.json");
+    log.warn("Wallet has been saved to wallets.json");
 }
 
-async function askingHowManyWallets() {
-    const answer = await askQuestion('您想创建多少个钱包？ ');
+async function askHowManyWallets() {
+    const answer = await askQuestion('How many wallets would you like to create? ');
     return parseInt(answer);
 }
 
-// 主函数
+// Main function
 async function main() {
-    log.warn(iniBapakBudi)
-    const numWallets = await askingHowManyWallets();
+    log.warn(banner);
+    const numWallets = await askHowManyWallets();
     for (let i = 0; i < numWallets; i++) {
-        log.info(`正在创建第${i + 1}个钱包...`);
+        log.info(`Creating wallet #${i + 1}...`);
 
         const newWallet = createNewWallet();
         saveWalletToFile(newWallet);
     }
 
-    log.info("所有钱包已创建。");
+    log.info("All wallets have been created.");
 }
 
-// 运行
+// Run the script
 main();
