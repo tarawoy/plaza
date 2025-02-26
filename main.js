@@ -6,9 +6,9 @@ import performTransactions from './utils/transactions.js';
 import { mintNft, signMessage } from './contract.js';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
-const reffCode = `bfc7b70e-66ad-4524-9bb6-733716c4da94`;
-const proxyPath = 'proxy.txt';
-const decimal = 1000000000000000000;
+const referralCode = `bfc7b70e-66ad-4524-9bb6-733716c4da94`;
+const proxyFilePath = 'proxy.txt';
+const decimalFactor = 1000000000000000000;
 
 const headers = {
     'Content-Type': 'application/json',
@@ -17,7 +17,7 @@ const headers = {
     'sec-ch-ua-mobile': '?0',
     'sec-ch-ua-platform': '"Windows"',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    'x-plaza-api-key': reffCode,
+    'x-plaza-api-key': referralCode,
     'x-plaza-vercel-server': 'undefined',
 };
 
@@ -40,30 +40,31 @@ const createAxiosInstance = (proxyUrl = null) => {
         });
     }
 };
-const getFaucet = async (address, proxyUrl) => {
+
+const requestFaucet = async (address, proxyUrl) => {
     const axiosInstance = createAxiosInstance(proxyUrl);
     try {
         const response = await axiosInstance.post('/faucet/queue', { address });
-        log.info(`水龙头响应: 成功`);
+        log.info(`Faucet response: Success`);
         return 'success';
     } catch (error) {
-        log.error(`领取水龙头时出错: ${error.response?.data?.message || error.message}`);
+        log.error(`Error requesting faucet: ${error.response?.data?.message || error.message}`);
         return null;
     }
 };
 
-const fetchUser = async (address, proxyUrl) => {
+const fetchUserData = async (address, proxyUrl) => {
     const axiosInstance = createAxiosInstance(proxyUrl);
     try {
         const response = await axiosInstance.get(`/user?user=${address}`);
         return response.data;
     } catch (error) {
-        log.error(`获取用户信息时出错: ${error.response?.data?.message || error.message}`);
+        log.error(`Error fetching user data: ${error.response?.data?.message || error.message}`);
         return null;
     }
 };
 
-const claimRequest = async (address, proxyUrl) => {
+const claimReferralReward = async (address, proxyUrl) => {
     const axiosInstance = createAxiosInstance(proxyUrl);
     try {
         const response = await axiosInstance.post(`/referrals/claim`, { address, code: 'JL4590xVLSix' });
@@ -81,18 +82,18 @@ const fetchUserBalance = async (address, proxyUrl) => {
         });
         return response.data;
     } catch (error) {
-        log.error(`获取余额时出错: ${error.response?.data?.message || error.message}`);
+        log.error(`Error fetching balance: ${error.response?.data?.message || error.message}`);
         return null;
     }
 };
 
-const getSign = async (level, user, signature, proxyUrl) => {
+const getSignature = async (level, user, signature, proxyUrl) => {
     const axiosInstance = createAxiosInstance(proxyUrl);
     try {
         const response = await axiosInstance.post('/gamification/claim-level-rewards', { level, user, signature });
         return response.data.signature;
     } catch (error) {
-        log.error(`获取签名时出错: ${error.response?.data?.message || error.message}`);
+        log.error(`Error getting signature: ${error.response?.data?.message || error.message}`);
         if (error.response?.data?.message === 'User already claimed the reward') {
             return 'claimed';
         }
@@ -117,17 +118,17 @@ const claimNftReward = async ({
         return;
     }
 
-    log.info(`=== 领取 NFT ${nftType} 奖励给地址: ${wallet.address} ===`);
-    const signWallet = await signMessage(wallet.privateKey);
-    const signature = await getSign(nftType, wallet.address, signWallet, proxy);
+    log.info(`=== Claiming NFT ${nftType} reward for address: ${wallet.address} ===`);
+    const signedWallet = await signMessage(wallet.privateKey);
+    const signature = await getSignature(nftType, wallet.address, signedWallet, proxy);
 
     if (signature && signature !== 'claimed') {
         const mintResult = await mintNft(wallet.privateKey, signature);
         if (mintResult) {
-            log.info(`=== 成功领取 NFT ${nftType} ===`);
+            log.info(`=== Successfully claimed NFT ${nftType} ===`);
             claimedState[walletKey][`nft${nftType}`] = true;
         } else {
-            log.error(`=== 领取 NFT ${nftType} 失败 ===`);
+            log.error(`=== Failed to claim NFT ${nftType} ===`);
         }
     } else if (signature === 'claimed') {
         claimedState[walletKey][`nft${nftType}`] = true;
@@ -137,7 +138,7 @@ const claimNftReward = async ({
 const main = async () => {
     log.warn(banner);
     const wallets = readWallets();
-    const proxyList = readProxyFile(proxyPath);
+    const proxyList = readProxyFile(proxyFilePath);
     let index = 0;
     const claimedState = {};
 
@@ -146,16 +147,16 @@ const main = async () => {
             const walletKey = wallet.address.toLowerCase();
             claimedState[walletKey] = claimedState[walletKey] || { nft1: false, nft3: false, nft5: false };
             const proxy = proxyList.length > 0 ? proxyList[index % proxyList.length] : null;
-            log.warn(`使用代理运行: ${proxy || '没有代理'}`);
+            log.warn(`Running with proxy: ${proxy || 'No proxy'}`);
             try {
-                await claimRequest(wallet.address, proxy);
+                await claimReferralReward(wallet.address, proxy);
 
-                const profile = await fetchUser(wallet.address, proxy);
+                const profile = await fetchUserData(wallet.address, proxy);
                 const level = profile?.level || 0;
                 const points = profile?.points || 0;
-                log.info(`=== 地址: ${wallet.address} | 等级: ${level} | 积分: ${points} ===`);
+                log.info(`=== Address: ${wallet.address} | Level: ${level} | Points: ${points} ===`);
 
-                log.info(`=== 检查 NFT 奖励 ===`);
+                log.info(`=== Checking NFT rewards ===`);
                 await claimNftReward({
                     points,
                     nftType: 1,
@@ -184,32 +185,32 @@ const main = async () => {
                 });
 
                 if (!claimedState[walletKey].nft1 && !claimedState[walletKey].nft3) {
-                    log.info(`=== 此地址没有 NFT 奖励 ===`);
+                    log.info(`=== No NFT rewards for this address ===`);
                 } else {
-                    log.info(`=== 此地址的 NFT 奖励已领取 ===`);
+                    log.info(`=== NFT rewards claimed for this address ===`);
                 }
 
                 const balances = await fetchUserBalance(wallet.address, proxy);
-                const balance = parseInt(balances[0]?.balanceRaw, 10) / decimal || 0;
-                log.info(`=== 地址: ${wallet.address} | wstETH 余额: ${balance} ===\n`);
+                const balance = parseInt(balances[0]?.balanceRaw, 10) / decimalFactor || 0;
+                log.info(`=== Address: ${wallet.address} | wstETH Balance: ${balance} ===\n`);
 
                 if (balance > 0.02) {
-                    log.info(`开始为地址 ${wallet.address} 执行交易`);
+                    log.info(`Starting transactions for address ${wallet.address}`);
                     await performTransactions(wallet.privateKey, 0);
                     await performTransactions(wallet.privateKey, 1);
 
-                    log.info('冷却时间10秒后继续...\n');
+                    log.info('Cooling down for 10 seconds before continuing...\n');
                     await new Promise(resolve => setTimeout(resolve, 10000));
                 } else {
-                    log.info(`=== wstETH 不足，尝试领取水龙头 ===`);
-                    const faucet = await getFaucet(wallet.address, proxy);
+                    log.info(`=== Insufficient wstETH, trying to request faucet ===`);
+                    const faucet = await requestFaucet(wallet.address, proxy);
                     await new Promise(resolve => setTimeout(resolve, 15000));
 
                     if (faucet === 'success') {
-                        log.info(`开始为地址 ${wallet.address} 执行交易`);
+                        log.info(`Starting transactions for address ${wallet.address}`);
                         await performTransactions(wallet.privateKey, 0);
                         await performTransactions(wallet.privateKey, 1);
-                        log.info('冷却时间10秒后继续...\n');
+                        log.info('Cooling down for 10 seconds before continuing...\n');
                         await new Promise(resolve => setTimeout(resolve, 10000));
                     }
                 }
@@ -218,9 +219,10 @@ const main = async () => {
                 console.error(err);
             }
         }
-        log.info('休眠24小时...');
+        log.info('Sleeping for 24 hours...');
         await new Promise(resolve => setTimeout(resolve, 24 * 60 * 60 * 1000));
     }
 };
-// 运行
+
+// Run the script
 main();
