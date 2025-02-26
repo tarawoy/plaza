@@ -1,7 +1,7 @@
 [
   {
-    "address": "地址",
-    "privateKey": "私钥",
-    "mnemonic": "助记词"
+    "address": "Address",
+    "privateKey": "Private Key",
+    "mnemonic": "Mnemonic"
   }
 ]
